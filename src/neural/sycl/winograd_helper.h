@@ -1,5 +1,4 @@
 #include <sycl/sycl.hpp>
-#include "dpct/dpct.hpp"
 /*
   This file is part of Leela Chess Zero.
   Copyright (C) 2020 The LCZero Authors
@@ -46,6 +45,10 @@
    SPDX-License-Identifier: GNU General Public License v3.0 only
 */
 
+
+
+
+
 namespace lczero {
 namespace sycldnn_backend {
 
@@ -59,6 +62,7 @@ __dpct_inline__ float mishActivate(float el) {
     return el - 2.0f * d;
   }
 }
+
 __dpct_inline__ float activate(float cVal, ActivationFunction activation) {
   switch (activation) {
     case ACTIVATION_RELU:
@@ -93,7 +97,7 @@ __dpct_inline__ float activate(float cVal, ActivationFunction activation) {
 }
 
 template <typename T, int M, int N, int K>
-__dpct_inline__ void matrixMul_gpu_serial(T* c, const T* a, const T* b) {
+__dpct_inline__  void matrixMul_gpu_serial(T* c, const T* a, const T* b) {
 #ifndef SKIP_FP16_BITS
 #pragma unroll
   for (int i = 0; i < M; ++i)
@@ -108,7 +112,7 @@ __dpct_inline__ void matrixMul_gpu_serial(T* c, const T* a, const T* b) {
 }
 
 template <typename T>
-__dpct_inline__ void FilterTransform4x4(T* transformed_filter,
+__dpct_inline__   void FilterTransform4x4(T* transformed_filter,
                                         const T* filter) {
   // transform applied to filter (of size 3x3)
   T G[6 * 3] = {1.0f / 4,  0,         0,         -1.0f / 6,  -1.0f / 6,
@@ -126,7 +130,7 @@ __dpct_inline__ void FilterTransform4x4(T* transformed_filter,
 }
 
 template <typename T>
-__dpct_inline__ void InputTransform4x4(T* transformedInput, const T* input) {
+inline __attribute__((always_inline))  void InputTransform4x4(T* transformedInput, const T* input) {
   // transform applied to input tile (of size 4x4)
   const T Bt[6 * 6] = {4, 0, -5, 0,  1, 0, 0, -4, -4, 1,  1, 0,
                        0, 4, -4, -1, 1, 0, 0, -2, -1, 2,  1, 0,
@@ -141,8 +145,7 @@ __dpct_inline__ void InputTransform4x4(T* transformedInput, const T* input) {
   matrixMul_gpu_serial<T, 6, 6, 6>(transformedInput, tempIp1, B);
 }
 
-template <typename T>
-__dpct_inline__ void OutputTransform4x4(T* output, const T* transformedOutput) {
+template <typename T> __dpct_inline__   void OutputTransform4x4(T* output, const T* transformedOutput) {
   // transform applied to result
   const T At[4 * 6] = {1, 1, 1, 1, 1, 0, 0, 1, -1, 2, -2, 0,
                        0, 1, 1, 4, 4, 0, 0, 1, -1, 8, -8, 1};
@@ -486,7 +489,8 @@ __dpct_inline__ float warpReduce(float x, const sycl::nd_item<3>& item_ct1) {
     device. Modify the size of the work-group to ensure that the value of the
     right-most dimension is a multiple of "32".
     */
-    x += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), x, mask);
+    //x += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), x, mask);
+    x += sycl::permute_group_by_xor(item_ct1.get_sub_group(), x, mask);
 
   return x;
 }
@@ -508,8 +512,7 @@ __dpct_inline__ float warpMax(float x, const sycl::nd_item<3>& item_ct1) {
     device. Modify the size of the work-group to ensure that the value of the
     right-most dimension is a multiple of "32".
     */
-    x = sycl::max(x, (float)(dpct::permute_sub_group_by_xor(
-                         item_ct1.get_sub_group(), x, mask)));
+    x = sycl::max(x, (float)(sycl::permute_group_by_xor(item_ct1.get_sub_group(), x, mask)));
 
   return x;
 }
@@ -518,10 +521,10 @@ __dpct_inline__ float warpMax(float x, const sycl::nd_item<3>& item_ct1) {
 __dpct_inline__ float atomicMaxFloat(float* addr, float val) {
   float max;
   max = !sycl::signbit(val)
-            ? sycl::bit_cast<float>(dpct::atomic_fetch_max<
+            ? sycl::bit_cast<float>(sycl::atomic_fetch_max<
                                     sycl::access::address_space::generic_space>(
                   (int*)addr, sycl::bit_cast<int>(val)))
-            : sycl::bit_cast<float>(dpct::atomic_fetch_min<
+            : sycl::bit_cast<float>(sycl::atomic_fetch_min<
                                     sycl::access::address_space::generic_space>(
                   (unsigned int*)addr, sycl::bit_cast<unsigned int>(val)));
 

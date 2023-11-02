@@ -47,15 +47,26 @@
 #pragma once
 
 #include <sycl/sycl.hpp>
-#include "dpct/dpct.hpp"
-#include "dpct/blas_utils.hpp"
-
 #include "utils/exception.h"
 
 #ifdef USE_CUDNN
 #include <cudnn.h>
 #else
 typedef void* cudnnHandle_t;
+#endif
+
+#if defined(_MSC_VER)
+#define __dpct_align__(n) __declspec(align(n))
+#define __dpct_inline__ __forceinline
+#else
+#define __dpct_align__(n) __attribute__((aligned(n)))
+#define __dpct_inline__ __inline__ __attribute__((always_inline))
+#endif
+
+#if defined(_MSC_VER)
+#define __dpct_noinline__ __declspec(noinline)
+#else
+#define __dpct_noinline__ __attribute__((noinline))
 #endif
 
 //#if CUBLAS_VER_MAJOR < 11
@@ -80,11 +91,11 @@ static constexpr int kMaxResBlockFusingSeFp16AmpereSmem =
     sizeof(sycl::half);  // shared memory used by the special
                          // kernel
 
-#ifdef USE_CUDNN
-void CudnnError(cudnnStatus_t status, const char* file, const int& line);
-#endif
-void CublasError(int status, const char* file, const int& line);
-void CudaError(dpct::err0 status, const char* file, const int& line);
+//#ifdef USE_CUDNN
+//void CudnnError(cudnnStatus_t status, const char* file, const int& line);
+//#endif
+//void CublasError(int status, const char* file, const int& line);
+//void CudaError(dpct::err0 status, const char* file, const int& line);
 
 #ifdef USE_CUDNN
 #define ReportCUDNNErrors(status) CudnnError(status, __FILE__, __LINE__)

@@ -47,9 +47,6 @@
 #pragma once
 
 #include <sycl/sycl.hpp>
-#include "dpct/dpct.hpp"
-#include "dpct/blas_utils.hpp"
-
 #include <cstddef>
 
 #include "sycl_common.h"

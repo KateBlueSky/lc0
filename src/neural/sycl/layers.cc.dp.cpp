@@ -45,7 +45,6 @@
 */
 
 #include <sycl/sycl.hpp>
-#include "dpct/dpct.hpp"
 #include "layers.h"
 
 #include <cassert>
@@ -64,8 +63,6 @@
 #else
 #include "oneapi/mkl.hpp"
 #include "oneapi/mkl/blas.hpp"
-//#include "dpct/lib_common_utils.hpp"
-//#include "dpct/blas_utils.hpp"
 #endif
 
 #include "sycl_common.h"
@@ -74,8 +71,6 @@
 #include "neural/shared/activation.h"
 #include "neural/shared/attention_policy_map.h"
 #include "utils/fp16_utils.h"
-#include "dpct/lib_common_utils.hpp"
-
 #include <cmath>
 
 

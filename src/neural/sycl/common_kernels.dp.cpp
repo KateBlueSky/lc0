@@ -45,7 +45,6 @@
 */
 
 #include <sycl/sycl.hpp>
-#include "dpct/dpct.hpp"
 #include <algorithm>
 #include <cassert>
 
